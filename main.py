@@ -504,4 +504,45 @@ if __name__ == "__main__":
             print("=" * 50)
 
     except (ValueError, IndexError) as e:
+
         print(f"\n❌ ОШИБКА В ПРОЦЕССЕ ВЫПОЛНЕНИЯ: {e}")
+        flowchart TD
+    %% Стили узлов
+    classDef startend fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef physics fill:#bbdefb,stroke:#1565c0,stroke-width:2px;
+    classDef ai fill:#e1bee7,stroke:#4a148c,stroke-width:2px;
+    classDef classic fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px;
+    classDef reject fill:#ffcdd2,stroke:#c62828,stroke-width:2px,stroke-dasharray: 5 5;
+
+    Start((СТАРТ ШАГА)):::startend --> Prediction[1. ПРЕДСКАЗАНИЕ<br/>Где мы должны быть по инерции?]:::physics
+
+    Prediction --> MapSearch[Поиск путей на карте<br/>Радиус 100м]:::physics
+    
+    MapSearch --> Censor{2. ФИЗИЧЕСКИЙ ЦЕНЗОР<br/>Кандидат ближе 15м<br/>от прогноза?}:::physics
+    
+    Censor -- Нет (Далеко) --> Trash[В мусорку]:::reject
+    Censor -- Да (Возможно) --> AI_Input[Список валидных путей]
+
+    AI_Input --> NeuralNet[3. НЕЙРОСЕТЬ<br/>Визуальное сравнение]:::ai
+    NeuralNet --> Top10[Выбор ТОП-10 похожих]:::ai
+
+    Top10 --> Calculation{4. КЛАССИКА / TOPSIS}:::classic
+
+    subgraph Logic_Classic [Логика выбора лучшего]
+        direction TB
+        CalcGeo[Геометрия: Форма + Углы]
+        CalcPen[Штраф за дальность:<br/>Дистанция * 0.05]
+        Sum[Итог = Геометрия + Штраф]
+    end
+
+    Calculation --> Logic_Classic:::classic
+    Logic_Classic --> BestCand[5. ПОБЕДИТЕЛЬ<br/>С минимальным штрафом]:::classic
+
+    BestCand --> Smoothing{6. СГЛАЖИВАНИЕ}:::physics
+    
+    Smoothing --> Confidence[Оценка уверенности]
+    Confidence --> Clamp[Ограничитель:<br/>Шаг не более 5 метров]
+    Clamp --> NewPos[7. НОВАЯ КООРДИНАТА]:::startend
+    
+    NewPos --> End((КОНЕЦ)):::startend
+    
